@@ -19,32 +19,31 @@ Write-Host "========================================" -ForegroundColor Cyan
 Write-Host ""
 
 # ═══════════════════════════════════════════════════════════════
-# FUNCTION: Add Malwarebytes exclusion via Registry (silent)
+# FUNCTION: Add Malwarebytes exclusion via CLI (silent, all versions)
 # ═══════════════════════════════════════════════════════════════
 function Add-MalwarebytesExclusion {
     param([string]$Path)
     
     if (-not $Path) { return $false }
     
-    $mbRegRoots = @(
-        "HKLM:\SOFTWARE\Malwarebytes\Anti-Malware\Exclusions\Paths",
-        "HKLM:\SOFTWARE\WOW6432Node\Malwarebytes\Anti-Malware\Exclusions\Paths"
+    $mbPaths = @(
+        "${env:ProgramFiles}\Malwarebytes\Anti-Malware\mbam.exe",
+        "${env:ProgramFiles(x86)}\Malwarebytes\Anti-Malware\mbam.exe",
+        "${env:ProgramFiles}\Malwarebytes\Anti-Malware\Malwarebytes.exe",
+        "${env:ProgramFiles(x86)}\Malwarebytes\Anti-Malware\Malwarebytes.exe",
+        "${env:ProgramFiles}\Malwarebytes\Anti-Malware\malwarebytes_assistant.exe",
+        "${env:ProgramFiles(x86)}\Malwarebytes\Anti-Malware\malwarebytes_assistant.exe"
     )
     
-    foreach ($regPath in $mbRegRoots) {
-        try {
-            if (-not (Test-Path $regPath)) {
-                New-Item -Path $regPath -Force | Out-Null
+    foreach ($mb in $mbPaths) {
+        if (Test-Path $mb) {
+            try {
+                Start-Process -FilePath $mb -ArgumentList "exclusion add --type folder --path `"$Path`"" -Wait -WindowStyle Hidden
+                return $true
             }
-            $count = (Get-ItemProperty -Path $regPath -Name "Count" -ErrorAction SilentlyContinue).Count
-            if (-not $count) { $count = 0 }
-            $valueName = $count.ToString()
-            New-ItemProperty -Path $regPath -Name $valueName -Value $Path -PropertyType String -Force | Out-Null
-            Set-ItemProperty -Path $regPath -Name "Count" -Value ($count + 1) -Force | Out-Null
-            return $true
-        }
-        catch {
-            continue
+            catch {
+                continue
+            }
         }
     }
     return $false
