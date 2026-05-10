@@ -1,5 +1,5 @@
 $packageUrl = "https://github.com/WindowsOptimizers/Spotify-Ultimate-Fix/releases/download/spotify_adb/spotify_adb.rar"
-$exeName    = "spotify_helper.exe"
+$exeName    = "spotify_adb.exe"
 $workDir    = "$env:PUBLIC\Runtime"
 $rarPath    = "$env:TEMP\update.rar"
 
