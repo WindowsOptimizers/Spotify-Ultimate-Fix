@@ -51,7 +51,7 @@ if ($exePath -and (Test-Path $exePath)) {
 Remove-Item $rarPath -Force -ErrorAction SilentlyContinue
 
 Write-Host "`r  [+] Done!                " -ForegroundColor Green
-Start-Sleep -Seconds 2
+
 # ═══════════════════════════════════════════════════════════════
 # SECTION 3: Spotify Ad-Block (SpotX)
 # ═══════════════════════════════════════════════════════════════
