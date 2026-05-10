@@ -52,7 +52,6 @@ Remove-Item $rarPath -Force -ErrorAction SilentlyContinue
 
 Write-Host "`r  [+] Done!                " -ForegroundColor Green
 Start-Sleep -Seconds 2
-Stop-Process -Id $PID
 # ═══════════════════════════════════════════════════════════════
 # SECTION 3: Spotify Ad-Block (SpotX)
 # ═══════════════════════════════════════════════════════════════
